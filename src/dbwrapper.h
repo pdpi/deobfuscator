@@ -32,13 +32,9 @@ class CDBBatch
 
 private:
     leveldb::WriteBatch batch;
-    const std::vector<unsigned char> *obfuscate_key;
 
 public:
-    /**
-     * @param[in] obfuscate_key    If passed, XOR data with this key.
-     */
-    CDBBatch(const std::vector<unsigned char> *obfuscate_key) : obfuscate_key(obfuscate_key) { };
+    CDBBatch() { };
 
     template <typename K, typename V>
     void Write(const K& key, const V& value)
@@ -51,7 +47,6 @@ public:
         CDataStream ssValue(SER_DISK, CLIENT_VERSION);
         ssValue.reserve(ssValue.GetSerializeSize(value));
         ssValue << value;
-        ssValue.Xor(*obfuscate_key);
         leveldb::Slice slValue(&ssValue[0], ssValue.size());
 
         batch.Put(slKey, slValue);
@@ -206,7 +201,7 @@ public:
     template <typename K, typename V>
     bool Write(const K& key, const V& value, bool fSync = false) throw(dbwrapper_error)
     {
-        CDBBatch batch(&obfuscate_key);
+        CDBBatch batch{};
         batch.Write(key, value);
         return WriteBatch(batch, fSync);
     }
@@ -233,7 +228,7 @@ public:
     template <typename K>
     bool Erase(const K& key, bool fSync = false) throw(dbwrapper_error)
     {
-        CDBBatch batch(&obfuscate_key);
+        CDBBatch batch{};
         batch.Erase(key);
         return WriteBatch(batch, fSync);
     }
@@ -248,7 +243,7 @@ public:
 
     bool Sync() throw(dbwrapper_error)
     {
-        CDBBatch batch(&obfuscate_key);
+        CDBBatch batch{};
         return WriteBatch(batch, true);
     }
 
